@@ -1,0 +1,95 @@
+<DOCTYPE HTML>
+<html>
+<head>
+<style>
+div {
+  max-width: 400px;
+  min-width: 100px;
+  background-color: powderblue;
+}
+</style>
+</head>
+<script>
+var socket;
+async function load (){
+window.up = 0;
+const params = new URLSearchParams(window.location.search);
+window.user = params.get("user");
+window.socket = new WebSocket("ws://74.85.167.115:8080");
+socket.addEventListener("open", () => {
+  // send a message to the server
+  socket.send(JSON.stringify({username: user, request: "connection made"}));
+  console.log("connected");
+});
+// receive a message from the server
+window.socket.addEventListener("message", ({ data }) => {
+  const packet = data;
+  console.log("Data recieved");
+  document.getElementById("hist").innerHTML = packet;
+});
+}
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function update(){
+if(isOpen(socket)){
+                socket.send(JSON.stringify({username: user, request: "FETCH h"}));
+        }
+        else{
+window.socket = new WebSocket("ws://74.85.167.115:8080");
+socket.onerror=function(event){
+        up = 1;
+	console.log("Error: cannot connect to websocket");
+	alert("Either the websocket is broken or you have a dumb dumb stupid computer who doesn't know how to shake hands with a simple program. Maybe refresh the page dumbass. Eat shit.");
+}
+socket.addEventListener("open", () => {
+  // send a message to the server
+  socket.send(JSON.stringify({username: user, request: "FETCH h"}));
+  console.log("requesting update");
+});
+}
+// receive a message from the server
+socket.addEventListener("message", ({ data }) => {
+  const packet = data;
+  document.getElementById("hist").innerHTML = packet;
+});
+await sleep(10000);
+if(up == 0){
+	update();
+}
+}
+function isOpen(ws) { return ws.readyState === ws.OPEN }
+async function sendMessage(){
+	//if(isOpen(socket)){
+	//	window.socket.send(JSON.stringify({username: user, request: document.getElementById("input").value}));
+	//	console.log("trying to send to open socket");
+	//	console.log(socket);
+	//}
+	//else{
+	console.log("could not connect");
+	window.socket = new WebSocket("ws://74.85.167.115:8080");
+	console.log("reconnecting");
+	while(!(isOpen(socket))){
+	 await sleep(10);
+	}
+	socket.addEventListener("message", ({ data }) => {
+		const packet = data;
+		document.getElementById("hist").innerHTML = packet;
+		console.log("Data recieved");
+	});
+	console.log("connected");
+	socket.send(JSON.stringify({username: user, request: document.getElementById("input").value}));
+	//}
+}
+
+
+</script>
+<body>
+<body onload="load()">
+<p style="border-width:3px; border-style:solid; border-color:#000000; padding: 1em;max-width:200px" id = "hist"></p>
+<br>
+<textarea id = "input" rows = "10" cols = "30"></textarea><br>
+<input id="send" type="button" value="send" onclick="sendMessage();" />
+</body>
+</html>
